@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="guestbook">
+	
+	<select id="selectByNo" resultType="guestbookvo" parameterType="long">
+		SELECT 	no,
+						name,
+						DATE_FORMAT(reg_date, '%Y-%m-%d %p %h:%i:%s') as regDate,
+						message
+				FROM	guestbook
+				WHERE	no = #{no}
+	</select>
+	
+	<select id="selectList" resultType="guestbookvo">
+		<![CDATA[
+				SELECT 	no,
+						name,
+						DATE_FORMAT(reg_date, '%Y-%m-%d %p %h:%i:%s') as regDate,
+						message
+				FROM	guestbook
+			ORDER BY	reg_date DESC
+		]]>
+	</select>
+	
+	<select id="ajaxList" resultType="guestbookvo" parameterType="int">
+		<![CDATA[
+					SELECT	no, 
+							name, 
+							date_format(reg_date, '%Y-%m-%d %h:%i:%s') as regDate, 
+							message
+				FROM		guestbook 
+				ORDER BY	no 			DESC
+				LIMIT 		#{page},3
+		]]>
+	</select>
+	
+	
+	<insert id="insert" parameterType="guestbookvo">
+		<![CDATA[
+			INSERT INTO		guestbook
+					VALUES	(null, #{name}, now(), #{message}, password(#{passwd}))
+		]]>
+		<selectKey keyProperty="no" resultType="long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	
+	<delete id="delete" parameterType="guestbookvo">
+		delete from guestbook
+		where no=#{no} and passwd=password(#{passwd})
+	</delete>
+</mapper>

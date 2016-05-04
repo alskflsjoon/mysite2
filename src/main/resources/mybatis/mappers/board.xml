@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="board">
+
+	<select id="getVo" resultType="boardvo" parameterType="long">
+		<![CDATA[
+			select no, user_no as userNo, author as userName, title, content as text, user_no, depth from board where no = #{no}
+		]]>
+	</select>
+
+	<select id="getVoForReply" resultType="boardvo" parameterType="long">
+		<![CDATA[
+			select user_no as userNo, author as userName ,group_no as groupNo, order_no+1 as orderNo, depth+1 as depth from board where no = #{no}
+		]]>
+	</select>
+
+	<update id="increaseViewCount" parameterType="long">
+	<![CDATA[
+		update board set hits = hits+1 where no=#{no}
+	]]>
+	</update>
+
+	<insert id="insert" parameterType="boardvo">
+		<![CDATA[
+			insert into board values 
+					(null, #{userNo}, #{userName}, #{title}, #{text}, now(), 0,
+					(select ifnull(max(group_no),0)+1 from board as b), 1, 0)
+		]]>
+		<selectKey keyProperty="no" resultType="long" order="AFTER">
+			select max(no) from board
+		</selectKey>
+	</insert>
+
+	<insert id="reply" parameterType="boardvo">
+		<![CDATA[
+			insert into board values 
+					(null, #{userNo}, #{userName}, #{title}, #{text}, now(), 0,
+					#{groupNo},#{orderNo},#{depth})
+		]]>
+		<selectKey keyProperty="no" resultType="long" order="AFTER">
+			select max(no) from board
+		</selectKey>
+	</insert>
+
+	<update id="increaseBeforeReply" parameterType="boardvo">
+		<![CDATA[
+			update board set order_no = order_no +1 where group_no=#{groupNo} and order_no >= #{orderNo}
+		]]>
+	</update>
+
+	<delete id="delete" parameterType="long">
+		<![CDATA[
+			delete from board where no=#{no}
+		]]>
+	</delete>
+
+	<update id="modify" parameterType="boardvo">
+		<![CDATA[
+			update board set title=#{title}, content=#{text} where no=#{no}
+		]]>
+	</update>
+
+	<select id="getList" resultType="boardvo" parameterType="map">
+		<![CDATA[
+			SELECT	no, 
+					user_no as userNo, 
+					author as userName, 
+					title, 
+					content as text, 
+					date_format(reg_date, '%Y-%m-%d %h:%i:%s') as regDate, 
+					hits as hit,
+					group_no as groupNo,
+					order_no as orderNo,
+					depth 
+			from	board where title like #{kwd} or content like #{kwd}
+		ORDER BY	group_no DESC, order_no ASC LIMIT #{index}, 3
+		]]>
+	</select>
+
+	<select id="countAll" resultType="long" parameterType="string">
+		<![CDATA[
+			select count(no) from board 
+			where title like #{search} or content like #{search}
+		]]>
+	</select>
+</mapper>
